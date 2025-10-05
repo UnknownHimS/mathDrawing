@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Formula Shape Drawer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .save-btn {
+            background: #48bb78;
+        }
+
+        .save-btn:hover {
+            background: #38a169;
+        }
+
+        .clear-btn {
+            background: #f56565;
+        }
+
+        .clear-btn:hover {
+            background: #e53e3e;
+        }
+
+        .help-panel {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .help-panel h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .formula {
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .formula strong {
+            color: #4a5568;
+        }
+
+        .canvas-area {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 600px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 10px;
+            height: 550px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .grid-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            position: relative;
+            background: white;
+            transition: background 0.2s;
+        }
+
+        .grid-cell:hover {
+            background: #f7fafc;
+        }
+
+        .shape {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+
+        .shape:active {
+            cursor: grabbing;
+        }
+
+        .shape.rectangle {
+            background: #4299e1;
+            border: 3px solid #2b6cb0;
+            border-radius: 4px;
+        }
+
+        .shape.square {
+            background: #48bb78;
+            border: 3px solid #2f855a;
+            border-radius: 4px;
+        }
+
+        .shape.circle {
+            background: #ed8936;
+            border: 3px solid #c05621;
+            border-radius: 50%;
+        }
+
+        .shape.triangle {
+            width: 0;
+            height: 0;
+            background: transparent;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 52px solid #9f7aea;
+            border-top: none;
+        }
+
+        .shape-info {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .example {
+            color: #718096;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>🎨 Shape Drawer</h1>
+            
+            <div class="input-section">
+                <label for="shapeType">Shape Type:</label>
+                <select id="shapeType">
+                    <option value="rectangle">Rectangle</option>
+                    <option value="square">Square</option>
+                    <option value="circle">Circle</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+
+            <div class="input-section">
+                <label for="dimensions">Dimensions (math expression):</label>
+                <input type="text" id="dimensions" placeholder="e.g., 5 x 3">
+                <div class="example" id="dimensionExample">Rectangle: length x width</div>
+            </div>
+
+            <div class="input-section">
+                <label for="gridPosition">Grid Position (column x row):</label>
+                <input type="text" id="gridPosition" placeholder="e.g., 3 x 2">
+                <div class="example">Column (1-8) x Row (1-6)</div>
+            </div>
+
+            <button onclick="drawShape()">Draw Shape</button>
+            <button class="save-btn" onclick="saveDrawing()">💾 Save Drawing</button>
+            <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
+
+            <div id="status"></div>
+
+            <div class="help-panel">
+                <h3>📐 Formula Reference</h3>
+                <div class="formula">
+                    <strong>Rectangle:</strong><br>
+                    Area = length × width
+                </div>
+                <div class="formula">
+                    <strong>Square:</strong><br>
+                    Area = side²
+                </div>
+                <div class="formula">
+                    <strong>Circle:</strong><br>
+                    Area = π × (diameter ÷ 2)²
+                </div>
+                <div class="formula">
+                    <strong>Triangle:</strong><br>
+                    Area = ½ × base × height
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <div class="grid-container" id="gridContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // In-memory storage (replaces localStorage for Claude.ai compatibility)
+        let savedShapes = [];
+
+        // Initialize grid
+        function initGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 48; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.index = i;
+                container.appendChild(cell);
+            }
+        }
+
+        // Update dimension example based on shape type
+        document.getElementById('shapeType').addEventListener('change', function() {
+            const examples = {
+                rectangle: 'Rectangle: length x width',
+                square: 'Square: side (or side x side)',
+                circle: 'Circle: diameter',
+                triangle: 'Triangle: base x height'
+            };
+            document.getElementById('dimensionExample').textContent = examples[this.value];
+        });
+
+        // Parse math expression
+        function parseExpression(expr) {
+            expr = expr.trim().toLowerCase();
+            if (expr.includes('x') || expr.includes('×')) {
+                const parts = expr.split(/[x×]/).map(p => parseFloat(p.trim()));
+                return parts.filter(n => !isNaN(n));
+            }
+            const num = parseFloat(expr);
+            return isNaN(num) ? [] : [num];
+        }
+
+        // Calculate area and dimensions
+        function calculateShape(type, values) {
+            switch(type) {
+                case 'rectangle':
+                    if (values.length >= 2) {
+                        const area = values[0] * values[1];
+                        return { area, width: values[0], height: values[1] };
+                    }
+                    break;
+                case 'square':
+                    const side = values.length >= 2 ? values[0] : values[0];
+                    if (side) {
+                        const area = side * side;
+                        return { area, width: side, height: side };
+                    }
+                    break;
+                case 'circle':
+                    if (values.length >= 1) {
+                        const diameter = values[0];
+                        const radius = diameter / 2;
+                        const area = Math.PI * radius * radius;
+                        return { area, width: diameter, height: diameter };
+                    }
+                    break;
+                case 'triangle':
+                    if (values.length >= 2) {
+                        const area = 0.5 * values[0] * values[1];
+                        return { area, width: values[0], height: values[1] };
+                    }
+                    break;
+            }
+            return null;
+        }
+
+        // Draw shape on grid
+        function drawShape() {
+            const type = document.getElementById('shapeType').value;
+            const dimInput = document.getElementById('dimensions').value;
+            const posInput = document.getElementById('gridPosition').value;
+
+            const dimensions = parseExpression(dimInput);
+            const position = parseExpression(posInput);
+
+            if (dimensions.length === 0) {
+                showStatus('Please enter valid dimensions!', 'error');
+                return;
+            }
+
+            if (position.length !== 2) {
+                showStatus('Please enter valid grid position (column x row)!', 'error');
+                return;
+            }
+
+            const col = Math.round(position[0]);
+            const row = Math.round(position[1]);
+
+            if (col < 1 || col > 8 || row < 1 || row > 6) {
+                showStatus('Grid position must be 1-8 for column and 1-6 for row!', 'error');
+                return;
+            }
+
+            const shapeData = calculateShape(type, dimensions);
+            if (!shapeData) {
+                showStatus('Invalid dimensions for this shape type!', 'error');
+                return;
+            }
+
+            const cellIndex = (row - 1) * 8 + (col - 1);
+            const cell = document.querySelector(`[data-index="${cellIndex}"]`);
+
+            // Remove existing shape in this cell
+            const existingShape = cell.querySelector('.shape');
+            if (existingShape) {
+                existingShape.remove();
+            }
+
+            // Create shape element
+            const shape = document.createElement('div');
+            shape.className = `shape ${type}`;
+            
+            // Scale shape to fit cell (max 80% of cell size)
+            const maxSize = 70;
+            const scale = Math.min(1, maxSize / Math.max(shapeData.width, shapeData.height));
+            const scaledWidth = shapeData.width * scale;
+            const scaledHeight = shapeData.height * scale;
+
+            if (type === 'triangle') {
+                shape.style.borderLeftWidth = `${scaledWidth / 2}px`;
+                shape.style.borderRightWidth = `${scaledWidth / 2}px`;
+                shape.style.borderBottomWidth = `${scaledHeight}px`;
+            } else {
+                shape.style.width = `${scaledWidth}px`;
+                shape.style.height = `${scaledHeight}px`;
+            }
+
+            // Add info tooltip
+            const info = document.createElement('div');
+            info.className = 'shape-info';
+            info.textContent = `Area: ${shapeData.area.toFixed(2)}`;
+            shape.appendChild(info);
+
+            // Make draggable
+            makeDraggable(shape, cellIndex);
+
+            cell.appendChild(shape);
+
+            // Save to memory
+            savedShapes = savedShapes.filter(s => s.cellIndex !== cellIndex);
+            savedShapes.push({
+                type,
+                dimensions: dimInput,
+                position: posInput,
+                cellIndex,
+                shapeData
+            });
+
+            showStatus(`${type.charAt(0).toUpperCase() + type.slice(1)} drawn at position ${col}x${row}!`, 'success');
+        }
+
+        // Make shapes draggable
+        function makeDraggable(shape, currentCell) {
+            let isDragging = false;
+
+            shape.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                shape.style.zIndex = '1000';
+                shape.style.opacity = '0.7';
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const grid = document.getElementById('gridContainer');
+                const rect = grid.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                shape.style.position = 'fixed';
+                shape.style.left = e.clientX + 'px';
+                shape.style.top = e.clientY + 'px';
+                shape.style.transform = 'translate(-50%, -50%)';
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+
+                const cells = document.querySelectorAll('.grid-cell');
+                let targetCell = null;
+
+                cells.forEach(cell => {
+                    const rect = cell.getBoundingClientRect();
+                    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        targetCell = cell;
+                    }
+                });
+
+                if (targetCell) {
+                    // Remove from old cell
+                    shape.remove();
+                    
+                    // Remove existing shape in target cell
+                    const existingShape = targetCell.querySelector('.shape');
+                    if (existingShape) {
+                        existingShape.remove();
+                    }
+
+                    // Reset styles
+                    shape.style.position = 'absolute';
+                    shape.style.left = '50%';
+                    shape.style.top = '50%';
+                    shape.style.opacity = '1';
+                    shape.style.zIndex = 'auto';
+
+                    // Add to new cell
+                    targetCell.appendChild(shape);
+
+                    // Update saved shapes
+                    const oldIndex = currentCell;
+                    const newIndex = parseInt(targetCell.dataset.index);
+                    const shapeRecord = savedShapes.find(s => s.cellIndex === oldIndex);
+                    if (shapeRecord) {
+                        shapeRecord.cellIndex = newIndex;
+                        const col = (newIndex % 8) + 1;
+                        const row = Math.floor(newIndex / 8) + 1;
+                        shapeRecord.position = `${col} x ${row}`;
+                    }
+
+                    makeDraggable(shape, newIndex);
+                } else {
+                    // Snap back
+                    shape.style.position = 'absolute';
+                    shape.style.left = '50%';
+                    shape.style.top = '50%';
+                    shape.style.opacity = '1';
+                    shape.style.zIndex = 'auto';
+                }
+            });
+        }
+
+        // Save drawing to memory
+        function saveDrawing() {
+            if (savedShapes.length === 0) {
+                showStatus('No shapes to save!', 'error');
+                return;
+            }
+            showStatus(`Drawing saved! (${savedShapes.length} shapes in memory)`, 'success');
+        }
+
+        // Load saved shapes
+        function loadDrawing() {
+            savedShapes.forEach(shapeRecord => {
+                const cell = document.querySelector(`[data-index="${shapeRecord.cellIndex}"]`);
+                if (!cell) return;
+
+                const shape = document.createElement('div');
+                shape.className = `shape ${shapeRecord.type}`;
+
+                const maxSize = 70;
+                const scale = Math.min(1, maxSize / Math.max(shapeRecord.shapeData.width, shapeRecord.shapeData.height));
+                const scaledWidth = shapeRecord.shapeData.width * scale;
+                const scaledHeight = shapeRecord.shapeData.height * scale;
+
+                if (shapeRecord.type === 'triangle') {
+                    shape.style.borderLeftWidth = `${scaledWidth / 2}px`;
+                    shape.style.borderRightWidth = `${scaledWidth / 2}px`;
+                    shape.style.borderBottomWidth = `${scaledHeight}px`;
+                } else {
+                    shape.style.width = `${scaledWidth}px`;
+                    shape.style.height = `${scaledHeight}px`;
+                }
+
+                const info = document.createElement('div');
+                info.className = 'shape-info';
+                info.textContent = `Area: ${shapeRecord.shapeData.area.toFixed(2)}`;
+                shape.appendChild(info);
+
+                makeDraggable(shape, shapeRecord.cellIndex);
+                cell.appendChild(shape);
+            });
+        }
+
+        // Clear all shapes
+        function clearAll() {
+            savedShapes = [];
+            initGrid();
+            showStatus('All shapes cleared!', 'success');
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            setTimeout(() => {
+                status.textContent = '';
+                status.className = 'status';
+            }, 3000);
+        }
+
+        // Initialize on load
+        initGrid();
+        loadDrawing();
+    </script>
+</body>
+</html>
